@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Index DB</title>
+  </head>
+  <body>
+    <p id="text"></p>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        
+        let htmlText = document.getElementById("text");
+
+        // IndexedDB açma işlemi
+        var request = window.indexedDB.open("my_database", 1);
+
+        // Veritabanı oluşturulduğunda veya sürümü yükseltildiğinde çağrılacak olan event listener
+        request.onupgradeneeded = function (event) {
+          var db = event.target.result;
+
+          // Yeni mağaza oluştur
+          var store = db.createObjectStore("my_store", { keyPath: "id" });
+
+          // Mağaza içine birkaç örnek ekleyelim
+          store.add({ id: 1, name: "John", age: 30 });
+          store.add({ id: 2, name: "Alice", age: 25 });
+          store.add({ id: 3, name: "Bob", age: 35 });
+        };
+
+        // Veritabanı açıldığında veya bir hata oluştuğunda çağrılacak olan event listener
+        request.onerror = function (event) {
+          console.log("Error opening database");
+        };
+
+        // Veritabanı başarıyla açıldığında çağrılacak olan event listener
+        request.onsuccess = function (event) {
+          var db = event.target.result;
+
+          // "my_store" mağazasına sadece okuma erişimiyle bir işlem başlat
+          var transaction = db.transaction("my_store", "readonly");
+
+          // İşlem başarılı olursa çalışacak event listener
+          transaction.oncomplete = function (event) {
+            console.log("Transaction completed");
+          };
+
+          // İşlem başarısız olursa çalışacak event listener
+          transaction.onerror = function (event) {
+            console.log("Transaction failed");
+          };
+
+          // İşlemde kullanılacak mağazayı al
+          var store = transaction.objectStore("my_store");
+
+          // Mağazadan bir öğe al (id'si 1 olan)
+          var getRequest = store.get(2);
+
+          // İşlem başarılı olursa çalışacak event listener
+          getRequest.onsuccess = function (event) {
+            var data = event.target.result;
+            htmlText.textContent =
+              "ID: " +
+              data.id +
+              " Name: " +
+              data.name +
+              " " +
+              " Age: " +
+              data.age;
+          };
+
+          // İşlem başarısız olursa çalışacak event listener
+          getRequest.onerror = function (event) {
+            console.log("Error getting data");
+          };
+        };
+      });
+    </script>
+  </body>
+</html>
